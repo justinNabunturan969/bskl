@@ -1,11 +1,90 @@
+import { Suspense } from "react";
 import Link from "next/link";
 import {
   Card, CardContent, CardDescription, CardHeader, CardTitle,
 } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
+import { Badge } from "@/components/ui/badge";
 import { Mic, FileText, Clock, Sparkles } from "lucide-react";
+import { ensureUser } from "@/lib/supabase/ensure-user";
 
-export default function DashboardPage() {
+export const dynamic = "force-dynamic";
+
+function formatRecordingDate(iso: string): string {
+  return new Date(iso).toLocaleDateString("en-US", {
+    month: "short",
+    day: "numeric",
+    year: "numeric",
+    hour: "numeric",
+    minute: "2-digit",
+  });
+}
+
+interface RecordingRow {
+  id: string;
+  title: string;
+  context: string;
+  status: string;
+  created_at: string;
+  duration_seconds: number | null;
+}
+
+async function RecentRecordings() {
+  let recordings: RecordingRow[] = [];
+
+  try {
+    const { supabase, user } = await ensureUser();
+    const { data, error } = await supabase
+      .from("recordings")
+      .select("id, title, context, status, created_at, duration_seconds")
+      .eq("user_id", user.id)
+      .is("deleted_at", null)
+      .order("created_at", { ascending: false })
+      .limit(10);
+
+    if (!error && data) recordings = data;
+  } catch (err) {
+    console.error("[dashboard] failed to load recordings:", err);
+  }
+
+  if (recordings.length === 0) {
+    return (
+      <p className="text-sm text-muted-foreground">
+        Your notes will appear here once you record something.
+      </p>
+    );
+  }
+
+  return (
+    <ul className="space-y-2">
+      {recordings.map((recording) => (
+        <li key={recording.id}>
+          <Link
+            href={`/notes/${recording.id}`}
+            className="flex items-center justify-between gap-3 rounded-md border p-3 hover:bg-muted/50 transition-colors"
+          >
+            <div className="min-w-0">
+              <p className="font-medium truncate">{recording.title}</p>
+              <p className="text-xs text-muted-foreground">
+                {formatRecordingDate(recording.created_at)}
+              </p>
+            </div>
+            <div className="flex items-center gap-2 shrink-0">
+              <Badge variant="outline" className="capitalize">
+                {recording.context}
+              </Badge>
+              <Badge variant="secondary" className="capitalize">
+                {recording.status}
+              </Badge>
+            </div>
+          </Link>
+        </li>
+      ))}
+    </ul>
+  );
+}
+
+function DashboardInner() {
   return (
     <div className="container mx-auto p-4 md:p-8 space-y-6">
       <div>
@@ -28,17 +107,17 @@ export default function DashboardPage() {
           </CardContent>
         </Card>
 
-        <Card>
+        <Card className="sm:col-span-2 lg:col-span-2">
           <CardHeader>
             <CardTitle className="flex items-center gap-2 text-base">
               <FileText className="h-5 w-5 text-primary" /> Recent notes
             </CardTitle>
-            <CardDescription>Generated study notes and meeting minutes</CardDescription>
+            <CardDescription>Your saved recordings and generated notes</CardDescription>
           </CardHeader>
           <CardContent>
-            <p className="text-sm text-muted-foreground">
-              Your notes will appear here once you record something.
-            </p>
+            <Suspense fallback={<p className="text-sm text-muted-foreground">Loading…</p>}>
+              <RecentRecordings />
+            </Suspense>
           </CardContent>
         </Card>
 
@@ -64,10 +143,18 @@ export default function DashboardPage() {
         </CardHeader>
         <CardContent>
           <p className="text-sm text-muted-foreground">
-            You&apos;re signed in. Recording, transcription, and AI notes will land in Phases 3–5.
+            Record audio, get transcripts, and generate AI-powered study notes — all free, no sign-up required.
           </p>
         </CardContent>
       </Card>
     </div>
+  );
+}
+
+export default function DashboardPage() {
+  return (
+    <Suspense fallback={null}>
+      <DashboardInner />
+    </Suspense>
   );
 }

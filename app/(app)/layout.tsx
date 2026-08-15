@@ -1,20 +1,12 @@
-import { redirect } from "next/navigation";
 import Link from "next/link";
-import { LayoutDashboard, Mic, Trash2, LogOut, Sparkles } from "lucide-react";
-import { createClient } from "@/lib/supabase/server";
-import { signOut } from "@/lib/actions/auth";
-import { Button } from "@/components/ui/button";
+import { LayoutDashboard, Mic, Trash2, Sparkles } from "lucide-react";
 import { Separator } from "@/components/ui/separator";
+import { SessionBootstrap } from "@/components/SessionBootstrap";
 
-export default async function AppLayout({ children }: { children: React.ReactNode }) {
-  const supabase = await createClient();
-  const { data: { user } } = await supabase.auth.getUser();
-  if (!user) redirect("/login");
-
-  const fullName = (user.user_metadata?.full_name as string) || user.email?.split("@")[0];
-
+export default function AppLayout({ children }: { children: React.ReactNode }) {
   return (
     <div className="min-h-screen flex flex-col md:flex-row bg-muted/20">
+      <SessionBootstrap />
       {/* Sidebar (desktop) */}
       <aside className="hidden md:flex md:w-64 flex-col border-r bg-card">
         <div className="p-4">
@@ -31,16 +23,10 @@ export default async function AppLayout({ children }: { children: React.ReactNod
           <NavLink href="/record" icon={Mic}>Record</NavLink>
           <NavLink href="/trash" icon={Trash2}>Trash</NavLink>
         </nav>
-        <Separator />
-        <div className="p-3 space-y-2">
-          <p className="text-sm font-medium truncate px-2">{fullName}</p>
-          <p className="text-xs text-muted-foreground truncate px-2">{user.email}</p>
-          <form action={signOut}>
-            <Button variant="ghost" size="sm" className="w-full justify-start" type="submit">
-              <LogOut className="h-4 w-4" />
-              Sign out
-            </Button>
-          </form>
+        <div className="p-3">
+          <p className="text-xs text-muted-foreground px-2">
+            Free for students · No account needed
+          </p>
         </div>
       </aside>
 
@@ -53,11 +39,6 @@ export default async function AppLayout({ children }: { children: React.ReactNod
             </div>
             <span className="font-semibold">BSKL</span>
           </Link>
-          <form action={signOut}>
-            <Button variant="ghost" size="icon" type="submit" aria-label="Sign out">
-              <LogOut className="h-4 w-4" />
-            </Button>
-          </form>
         </div>
         <nav className="flex border-t" aria-label="Mobile navigation">
           <MobileNavLink href="/dashboard" icon={LayoutDashboard}>Home</MobileNavLink>

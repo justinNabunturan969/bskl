@@ -1,5 +1,6 @@
 import { createServerClient } from "@supabase/ssr";
 import { cookies } from "next/headers";
+import { nodeHttpsFetch } from "./fetch";
 
 export async function createClient() {
   const cookieStore = await cookies();
@@ -20,6 +21,11 @@ export async function createClient() {
             // Called from a Server Component; ignore.
           }
         },
+      },
+      global: {
+        // Bypass the broken global fetch — the AV on this machine mangles
+        // TLS POSTs to Supabase. node:https works.
+        fetch: nodeHttpsFetch,
       },
     }
   );

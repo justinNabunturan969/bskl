@@ -13,14 +13,9 @@ export default function LandingPage() {
             </div>
             <span className="font-semibold text-lg">BSKL</span>
           </div>
-          <div className="flex gap-2">
-            <Button asChild variant="ghost" size="sm">
-              <Link href="/login">Log in</Link>
-            </Button>
-            <Button asChild size="sm">
-              <Link href="/signup">Sign up</Link>
-            </Button>
-          </div>
+          <Button asChild size="sm">
+            <Link href="/dashboard">Open app</Link>
+          </Button>
         </div>
       </header>
 
@@ -32,16 +27,16 @@ export default function LandingPage() {
             </h1>
             <p className="text-lg md:text-xl text-muted-foreground">
               Turn lectures and meetings into study-ready notes and meeting minutes.
-              Free, offline-capable, and multilingual.
+              Free, no sign-up, multilingual, and your data stays yours.
             </p>
             <div className="flex flex-col sm:flex-row gap-3 justify-center pt-4">
               <Button asChild size="lg">
-                <Link href="/signup">Get started free</Link>
-              </Button>
-              <Button asChild size="lg" variant="outline">
-                <Link href="/login">I have an account</Link>
+                <Link href="/dashboard">Try it now — no sign-up</Link>
               </Button>
             </div>
+            <p className="text-xs text-muted-foreground">
+              Free for students. No email, no account, no data sold.
+            </p>
           </div>
 
           <div className="grid sm:grid-cols-2 lg:grid-cols-3 gap-4 mt-16 max-w-5xl mx-auto">

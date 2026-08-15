@@ -1,5 +1,6 @@
 import { createServerClient } from "@supabase/ssr";
 import { type NextRequest, NextResponse } from "next/server";
+import { nodeHttpsFetch } from "./fetch";
 
 export async function updateSession(request: NextRequest) {
   let response = NextResponse.next({ request });
@@ -22,29 +23,28 @@ export async function updateSession(request: NextRequest) {
           );
         },
       },
+      global: {
+        // Bypass the broken global fetch — see lib/supabase/fetch.ts.
+        fetch: nodeHttpsFetch,
+      },
     }
   );
 
-  const { data: { user } } = await supabase.auth.getUser();
-
-  // Protect app routes
-  const protectedPaths = ["/dashboard", "/record", "/notes", "/trash", "/settings"];
-  const isProtected = protectedPaths.some(p => request.nextUrl.pathname.startsWith(p));
-  const isAuthPage = request.nextUrl.pathname.startsWith("/login") ||
-                     request.nextUrl.pathname.startsWith("/signup");
-
-  if (isProtected && !user) {
-    const url = request.nextUrl.clone();
-    url.pathname = "/login";
-    url.searchParams.set("redirectTo", request.nextUrl.pathname);
-    return NextResponse.redirect(url);
+  // Read current user (if any). Don't create a new session here —
+  // the save action and other server actions call `ensureUser` which
+  // handles anonymous sign-in. If the middleware created a session too,
+  // each request could end up with a different anonymous user_id, and
+  // queries like `recordings.user_id = user.id` would miss rows.
+  try {
+    const { data } = await supabase.auth.getUser();
+    // Touch the user so TS doesn't warn about unused var; nothing to do.
+    void data.user;
+  } catch {
+    // No session / Supabase unreachable — let the request through; the
+    // page or action will handle the null user.
   }
 
-  if (isAuthPage && user) {
-    const url = request.nextUrl.clone();
-    url.pathname = "/dashboard";
-    return NextResponse.redirect(url);
-  }
-
+  // No redirects. Anyone can access any page; the page itself decides
+  // what to render when there's no user.
   return response;
 }
