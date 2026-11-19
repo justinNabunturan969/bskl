@@ -44,6 +44,7 @@ credentials.json
 service-account*.json
 secrets.json
 secrets/
+mcp.json
 .mcp.json
 
 # vercel
